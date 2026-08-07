@@ -1,0 +1,10 @@
+# Build outputs
+socket/server
+socket/client
+stopwatch/stopwatch
+quiz/quiz
+
+# Editor / OS
+.DS_Store
+*.o
+*~
