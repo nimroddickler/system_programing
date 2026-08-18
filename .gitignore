@@ -3,6 +3,8 @@ socket/server
 socket/client
 stopwatch/stopwatch
 quiz/quiz
+prodcons/prodcons
+prodcons/numbers.txt
 
 # Editor / OS
 .DS_Store
