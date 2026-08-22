@@ -5,6 +5,8 @@ stopwatch/stopwatch
 quiz/quiz
 rtsig/receiver
 rtsig/sender
+prodcons/prodcons
+prodcons/numbers.txt
 
 # Editor / OS
 .DS_Store
