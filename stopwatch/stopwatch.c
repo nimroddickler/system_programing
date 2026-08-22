@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
+#include <stdlib.h>
 
 
 static volatile sig_atomic_t got_term; // initialize to 0
@@ -9,31 +10,43 @@ static volatile sig_atomic_t got_usr1; // initialize to 0
 static volatile sig_atomic_t got_usr2; // initialize to 0
 static volatile sig_atomic_t got_int;  // initialize to 0
 
-void on_usr1(int sig) { 
+static void on_usr1(int sig) { 
     (void)sig; // silence warning
     got_usr1 = 1;
 }
-void on_usr2(int sig) { 
+static void on_usr2(int sig) { 
     (void)sig; // silence warning
     got_usr2 = 1;
 }
-void on_term(int sig) { 
+static void on_term(int sig) { 
     (void)sig; // silence warning
     got_term = 1;
 }
-void on_int(int sig) { 
+static void on_int(int sig) { 
     (void)sig; // silence warning
     got_int = 1;
+}
+
+static void install_handler(int signum, void (*handler)(int))
+{
+    struct sigaction sa;
+    sa.sa_handler = handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(signum, &sa, NULL) != 0) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
 }
 
 int main(void) {
     int pid = getpid();
     printf("%d\n", pid);
     
-    signal(SIGTERM, on_term);
-    signal(SIGUSR1, on_usr1);
-    signal(SIGUSR2, on_usr2);
-    signal(SIGINT,  on_int);
+    install_handler(SIGTERM, on_term);
+    install_handler(SIGUSR1, on_usr1);
+    install_handler(SIGUSR2, on_usr2);
+    install_handler(SIGINT,  on_int);
 
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
