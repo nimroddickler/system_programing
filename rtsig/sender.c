@@ -1,10 +1,10 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
-int main(int argc, char *argv[]) {
-    /* TODO: check argc == 2, parse receiver pid from argv[1] */
+int main(int argc, char *argv[])
+{
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <receiver-pid>\n", argv[0]);
         return 1;
@@ -21,15 +21,14 @@ int main(int argc, char *argv[]) {
             break;
         if (line[0] == 'e')
             break;
-        
+
         sscanf(line, "%d %d", &count, &offset);
         if (offset < 0 || offset > 2) {
             fprintf(stderr, "Invalid offset: %d\n", offset);
             continue;
         }
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++)
             kill(receiver_pid, SIGRTMIN + offset);
-        }
     }
     return 0;
 }
