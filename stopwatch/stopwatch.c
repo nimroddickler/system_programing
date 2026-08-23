@@ -62,6 +62,16 @@ int main(void)
 
     for (;;) {
         pause();
+
+        if (got_usr2) {
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            double slice = (now.tv_sec - start.tv_sec)
+                         + (now.tv_nsec - start.tv_nsec) / 1e9;
+            double elapsed = running ? frozen + slice : frozen;
+            printf("elapsed: %.3f s\n", elapsed);
+            got_usr2 = 0;
+        }
         if (got_usr1) {
             struct timespec now;
             clock_gettime(CLOCK_MONOTONIC, &now);
@@ -78,15 +88,6 @@ int main(void)
                 printf("resumed\n");
             }
             got_usr1 = 0;
-        }
-        if (got_usr2) {
-            struct timespec now;
-            clock_gettime(CLOCK_MONOTONIC, &now);
-            double slice = (now.tv_sec - start.tv_sec)
-                         + (now.tv_nsec - start.tv_nsec) / 1e9;
-            double elapsed = running ? frozen + slice : frozen;
-            printf("elapsed: %.3f s\n", elapsed);
-            got_usr2 = 0;
         }
         if (got_int) {
             frozen = 0.0;
