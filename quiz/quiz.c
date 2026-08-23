@@ -1,5 +1,7 @@
-#include <stdio.h>
+#include <errno.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define TIME_LIMIT 5
@@ -8,6 +10,7 @@ static volatile sig_atomic_t seconds;
 static volatile sig_atomic_t timed_out;
 
 void on_alarm(int sig) {
+    int saved = errno;
     (void)sig;
     seconds++;
     write(STDOUT_FILENO, "\a", 1); /* beep */
@@ -19,6 +22,7 @@ void on_alarm(int sig) {
     } else {
         alarm(1);
     }
+    errno = saved;
 }
 
 int main(void) {
@@ -30,7 +34,14 @@ int main(void) {
     int num_of_questions = 3;
     char answer[4]; // "y" or "n" + \0
 
-    signal(SIGALRM, on_alarm);
+    struct sigaction sa;
+    sa.sa_handler = on_alarm;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGALRM, &sa, NULL) != 0) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
 
     int pid = getpid();
     printf("%d\n", pid);
@@ -42,8 +53,12 @@ int main(void) {
         seconds = 0;
         timed_out = 0;
         alarm(1);
-        if (fgets(answer, sizeof(answer), stdin) == NULL)
-            break;
+        while (fgets(answer, sizeof(answer), stdin) == NULL) {
+            if (timed_out)
+                break;
+            if (errno != EINTR)
+                break;
+        }
         alarm(0);
 
         printf("  (waited %d sec)\n", (int)seconds);
