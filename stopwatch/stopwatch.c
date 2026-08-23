@@ -55,13 +55,27 @@ int main(void)
     install_handler(SIGUSR2, on_usr2);
     install_handler(SIGINT,  on_int);
 
+    sigset_t mask, oldmask, waitmask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGUSR1);
+    sigaddset(&mask, SIGUSR2);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGTERM);
+    if (sigprocmask(SIG_BLOCK, &mask, &oldmask) != 0) {
+        perror("sigprocmask");
+        exit(EXIT_FAILURE);
+    }
+
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
     int running = 1;
     double frozen = 0.0;
 
     for (;;) {
-        pause();
+        if (sigprocmask(SIG_BLOCK, &mask, NULL) != 0) {
+            perror("sigprocmask");
+            exit(EXIT_FAILURE);
+        }
 
         if (got_usr2) {
             struct timespec now;
@@ -100,5 +114,12 @@ int main(void)
             printf("terminated cleanly\n");
             break;
         }
+
+        waitmask = oldmask;
+        sigdelset(&waitmask, SIGUSR1);
+        sigdelset(&waitmask, SIGUSR2);
+        sigdelset(&waitmask, SIGINT);
+        sigdelset(&waitmask, SIGTERM);
+        sigsuspend(&waitmask);
     }
 }
